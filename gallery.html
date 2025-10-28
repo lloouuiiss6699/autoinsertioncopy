@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Autoinsertion Virtual Gallery</title>
+  <title>Autoinsertion U-Shaped Gallery</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
@@ -17,8 +17,10 @@
 
 <a-scene background="color: #111">
   <!-- Lighting -->
-  <a-entity light="type: ambient; color: #666"></a-entity>
+  <a-entity light="type: ambient; color: #888"></a-entity>
   <a-entity light="type: directional; color: #fff; intensity: 0.8" position="0 4 4"></a-entity>
+  <a-entity light="type: directional; color: #fff; intensity: 0.6" position="5 4 0"></a-entity>
+  <a-entity light="type: directional; color: #fff; intensity: 0.6" position="-5 4 0"></a-entity>
 
   <!-- Camera -->
   <a-entity position="0 1.6 6">
@@ -28,16 +30,15 @@
   <!-- Floor -->
   <a-plane rotation="-90 0 0" width="20" height="20" color="#222"></a-plane>
 
-  <!-- Gallery walls -->
+  <!-- U-shaped gallery walls -->
   <a-plane id="wall1" position="0 2 -5" rotation="0 0 0" width="10" height="4"></a-plane>
-  <a-plane id="wall2" position="5 2 0" rotation="0 -90 0" width="10" height="4"></a-plane>
-  <a-plane id="wall3" position="0 2 5" rotation="0 180 0" width="10" height="4"></a-plane>
-  <a-plane id="wall4" position="-5 2 0" rotation="0 90 0" width="10" height="4"></a-plane>
+  <a-plane id="wall2" position="-5 2 0" rotation="0 90 0" width="10" height="4"></a-plane>
+  <a-plane id="wall3" position="5 2 0" rotation="0 -90 0" width="10" height="4"></a-plane>
 </a-scene>
 
 <script>
-const overlaySrc = 'mee.png'; // make sure mee.png is in the same folder
-const wallIds = ['wall1','wall2','wall3','wall4'];
+const overlaySrc = 'mee.png'; // put mee.png in the same folder
+const wallIds = ['wall1','wall2','wall3'];
 
 function getRandomImage() {
   const width = 500 + Math.floor(Math.random()*300);
@@ -53,19 +54,19 @@ function createWallCollage(wallId) {
   canvas.width = 800;
   canvas.height = 400;
   canvas.className = 'wall-canvas';
-  document.body.appendChild(canvas); // must be in DOM
+  document.body.appendChild(canvas);
 
   const ctx = canvas.getContext('2d');
-
-  // Draw placeholder immediately so texture isn’t empty
-  ctx.fillStyle = '#111';
+  ctx.fillStyle = '#111'; // placeholder
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
   const wallEl = document.getElementById(wallId);
-  wallEl.setAttribute('material', 'src', canvas);
-  wallEl.getObject3D('mesh').material.map.needsUpdate = true;
+  wallEl.addEventListener('loaded', () => {
+    wallEl.setAttribute('material','src',canvas);
+    drawNextImage();
+  });
 
-  function addSingleImage() {
+  function drawNextImage() {
     const imgData = getRandomImage();
     const bg = new Image();
     bg.crossOrigin = "Anonymous";
@@ -108,26 +109,21 @@ function createWallCollage(wallId) {
         ctx.drawImage(overlay, -overlayWidth/2, -overlayWidth/2, overlayWidth, overlayWidth);
         ctx.restore();
 
-        // Update texture
-        if (wallEl.getObject3D('mesh')) {
-          wallEl.getObject3D('mesh').material.map.needsUpdate = true;
+        const mesh = wallEl.getObject3D('mesh');
+        if(mesh && mesh.material.map) {
+          mesh.material.map.needsUpdate = true;
         }
       };
 
-      setTimeout(addSingleImage, 1000 + Math.random()*300);
+      setTimeout(drawNextImage, 1000 + Math.random()*300);
     };
 
-    bg.onerror = () => {
-      // Retry if image fails
-      setTimeout(addSingleImage, 500);
-    };
+    bg.onerror = () => setTimeout(drawNextImage, 500);
   }
 
-  addSingleImage();
   return canvas;
 }
 
-// Initialize all walls
 wallIds.forEach(id => createWallCollage(id));
 </script>
 
