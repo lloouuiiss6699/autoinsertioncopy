@@ -6,7 +6,6 @@
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
-    /* Offscreen canvases are still renderable */
     canvas.wall-canvas {
       position: absolute;
       left: -9999px;
@@ -54,12 +53,17 @@ function createWallCollage(wallId) {
   canvas.width = 800;
   canvas.height = 400;
   canvas.className = 'wall-canvas';
-  document.body.appendChild(canvas); // must be in DOM for A-Frame
+  document.body.appendChild(canvas); // must be in DOM
 
   const ctx = canvas.getContext('2d');
 
+  // Draw placeholder immediately so texture isn’t empty
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
   const wallEl = document.getElementById(wallId);
   wallEl.setAttribute('material', 'src', canvas);
+  wallEl.getObject3D('mesh').material.map.needsUpdate = true;
 
   function addSingleImage() {
     const imgData = getRandomImage();
@@ -79,14 +83,14 @@ function createWallCollage(wallId) {
       const x = centerX + offsetX - width/2;
       const y = centerY + offsetY - height/2;
 
-      // Draw background with rotation
+      // Draw background
       ctx.save();
       ctx.translate(x + width/2, y + height/2);
       ctx.rotate(getRandomRotation() * Math.PI/180);
       ctx.drawImage(bg, -width/2, -height/2, width, height);
       ctx.restore();
 
-      // Overlay
+      // Draw overlay
       const overlay = new Image();
       overlay.src = overlaySrc;
       overlay.onload = () => {
@@ -104,14 +108,18 @@ function createWallCollage(wallId) {
         ctx.drawImage(overlay, -overlayWidth/2, -overlayWidth/2, overlayWidth, overlayWidth);
         ctx.restore();
 
-        // Mark canvas for A-Frame to update texture
+        // Update texture
         if (wallEl.getObject3D('mesh')) {
           wallEl.getObject3D('mesh').material.map.needsUpdate = true;
         }
       };
 
-      // Schedule next image
       setTimeout(addSingleImage, 1000 + Math.random()*300);
+    };
+
+    bg.onerror = () => {
+      // Retry if image fails
+      setTimeout(addSingleImage, 500);
     };
   }
 
