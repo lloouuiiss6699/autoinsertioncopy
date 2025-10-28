@@ -6,7 +6,12 @@
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
-    canvas { display: none; } /* hide the canvases */
+    /* Offscreen canvases are still renderable */
+    canvas.wall-canvas {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+    }
   </style>
 </head>
 <body>
@@ -48,6 +53,9 @@ function createWallCollage(wallId) {
   const canvas = document.createElement('canvas');
   canvas.width = 800;
   canvas.height = 400;
+  canvas.className = 'wall-canvas';
+  document.body.appendChild(canvas); // must be in DOM for A-Frame
+
   const ctx = canvas.getContext('2d');
 
   const wallEl = document.getElementById(wallId);
