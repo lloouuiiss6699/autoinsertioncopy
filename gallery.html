@@ -32,7 +32,7 @@
 </a-scene>
 
 <script>
-const overlaySrc = 'mee.png'; // make sure mee.png is in your Netlify root
+const overlaySrc = 'mee.png'; // make sure mee.png is in the same folder
 const wallIds = ['wall1','wall2','wall3','wall4'];
 
 function getRandomImage() {
@@ -44,7 +44,6 @@ function getRandomImage() {
 function getRandomRotation() { return Math.random() * 30 - 15; }
 function getRandomScale() { return 0.9 + Math.random() * 0.2; }
 
-// Create a canvas-based collage generator per wall
 function createWallCollage(wallId) {
   const canvas = document.createElement('canvas');
   canvas.width = 800;
@@ -57,7 +56,7 @@ function createWallCollage(wallId) {
   function addSingleImage() {
     const imgData = getRandomImage();
     const bg = new Image();
-    bg.crossOrigin = "Anonymous"; // picsum needs this for canvas
+    bg.crossOrigin = "Anonymous";
     bg.src = imgData.src;
 
     bg.onload = () => {
@@ -72,7 +71,7 @@ function createWallCollage(wallId) {
       const x = centerX + offsetX - width/2;
       const y = centerY + offsetY - height/2;
 
-      // rotation
+      // Draw background with rotation
       ctx.save();
       ctx.translate(x + width/2, y + height/2);
       ctx.rotate(getRandomRotation() * Math.PI/180);
@@ -96,6 +95,11 @@ function createWallCollage(wallId) {
         ctx.rotate(getRandomRotation() * Math.PI/180);
         ctx.drawImage(overlay, -overlayWidth/2, -overlayWidth/2, overlayWidth, overlayWidth);
         ctx.restore();
+
+        // Mark canvas for A-Frame to update texture
+        if (wallEl.getObject3D('mesh')) {
+          wallEl.getObject3D('mesh').material.map.needsUpdate = true;
+        }
       };
 
       // Schedule next image
@@ -110,5 +114,6 @@ function createWallCollage(wallId) {
 // Initialize all walls
 wallIds.forEach(id => createWallCollage(id));
 </script>
+
 </body>
 </html>
