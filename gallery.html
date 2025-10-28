@@ -15,34 +15,39 @@
 </head>
 <body>
 
-<a-scene background="color: #111">
+<a-scene background="color: #fff">
   <!-- Lighting -->
   <a-entity light="type: ambient; color: #888"></a-entity>
-  <a-entity light="type: directional; color: #fff; intensity: 0.8" position="0 6 6"></a-entity>
-  <a-entity light="type: directional; color: #fff; intensity: 0.6" position="6 6 0"></a-entity>
-  <a-entity light="type: directional; color: #fff; intensity: 0.6" position="-6 6 0"></a-entity>
+  <a-entity light="type: directional; color: #fff; intensity: 0.8" position="0 8 6"></a-entity>
+  <a-entity light="type: directional; color: #fff; intensity: 0.6" position="6 8 0"></a-entity>
+  <a-entity light="type: directional; color: #fff; intensity: 0.6" position="-6 8 0"></a-entity>
 
   <!-- Camera -->
   <a-entity position="0 1.8 8">
     <a-camera look-controls></a-camera>
   </a-entity>
 
-  <!-- Floor -->
-  <a-plane rotation="-90 0 0" width="20" height="20" color="#222"></a-plane>
+  <!-- Floor and ceiling -->
+  <a-plane rotation="-90 0 0" width="20" height="20" color="#fff" position="0 0 0"></a-plane>
+  <a-plane rotation="90 0 0" width="20" height="20" color="#fff" position="0 8 0"></a-plane>
 
-  <!-- U-shaped gallery walls (taller) -->
-  <a-plane id="wall1" position="0 3 -5" rotation="0 0 0" width="10" height="6"></a-plane>
-  <a-plane id="wall2" position="-5 3 0" rotation="0 90 0" width="10" height="6"></a-plane>
-  <a-plane id="wall3" position="5 3 0" rotation="0 -90 0" width="10" height="6"></a-plane>
+  <!-- U-shaped gallery walls -->
+  <a-plane id="wall1" position="0 4 -5" rotation="0 0 0" width="10" height="8" color="#fff"></a-plane>
+  <a-plane id="wall2" position="-5 4 0" rotation="0 90 0" width="10" height="8" color="#fff"></a-plane>
+  <a-plane id="wall3" position="5 4 0" rotation="0 -90 0" width="10" height="8" color="#fff"></a-plane>
 </a-scene>
 
 <script>
-const overlaySrc = 'mee.png'; // make sure mee.png is in the same folder
+const overlaySrc = 'mee.png'; // put mee.png in the same folder
 const wallIds = ['wall1','wall2','wall3'];
+
+// Use a 5:4 canvas for taller walls
+const CANVAS_WIDTH = 1000;
+const CANVAS_HEIGHT = 800;
 
 function getRandomImage() {
   const width = 500 + Math.floor(Math.random()*300);
-  const height = 600 + Math.floor(Math.random()*200); // taller canvas
+  const height = 400 + Math.floor(Math.random()*200);
   return { src: `https://picsum.photos/${width}/${height}?random=${Math.random()}`, width, height };
 }
 
@@ -51,13 +56,13 @@ function getRandomScale() { return 0.9 + Math.random() * 0.2; }
 
 function createWallCollage(wallId) {
   const canvas = document.createElement('canvas');
-  canvas.width = 800;
-  canvas.height = 600; // taller to match wall
+  canvas.width = CANVAS_WIDTH;
+  canvas.height = CANVAS_HEIGHT;
   canvas.className = 'wall-canvas';
   document.body.appendChild(canvas);
 
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#111'; // placeholder
+  ctx.fillStyle = '#fff'; // initial wall color
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
   const wallEl = document.getElementById(wallId);
@@ -84,29 +89,31 @@ function createWallCollage(wallId) {
       const x = centerX + offsetX - width/2;
       const y = centerY + offsetY - height/2;
 
-      // Draw background
+      // Draw background image
       ctx.save();
       ctx.translate(x + width/2, y + height/2);
       ctx.rotate(getRandomRotation() * Math.PI/180);
       ctx.drawImage(bg, -width/2, -height/2, width, height);
       ctx.restore();
 
-      // Draw overlay
+      // Draw overlay proportionally
       const overlay = new Image();
       overlay.src = overlaySrc;
       overlay.onload = () => {
         const overlayWidth = 120;
+        const overlayHeight = overlay.naturalHeight * (overlayWidth / overlay.naturalWidth);
+
         const marginX = width*0.2;
         const marginY = height*0.2;
         const overlayMaxX = width - overlayWidth - 2*marginX;
-        const overlayMaxY = height - overlayWidth - 2*marginY;
+        const overlayMaxY = height - overlayHeight - 2*marginY;
         const ox = x + marginX + Math.random()*overlayMaxX;
         const oy = y + marginY + Math.random()*overlayMaxY;
 
         ctx.save();
-        ctx.translate(ox + overlayWidth/2, oy + overlayWidth/2);
+        ctx.translate(ox + overlayWidth/2, oy + overlayHeight/2);
         ctx.rotate(getRandomRotation() * Math.PI/180);
-        ctx.drawImage(overlay, -overlayWidth/2, -overlayWidth/2, overlayWidth, overlayWidth);
+        ctx.drawImage(overlay, -overlayWidth/2, -overlayHeight/2, overlayWidth, overlayHeight);
         ctx.restore();
 
         const mesh = wallEl.getObject3D('mesh');
