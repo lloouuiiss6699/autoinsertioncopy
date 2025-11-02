@@ -11,9 +11,11 @@
   </head>
   <body>
     <a-scene background="color: #fff">
+      <!-- lighting -->
       <a-entity light="type: ambient; color: #888"></a-entity>
       <a-entity light="type: directional; color: #fff; intensity: 0.8" position="0 8 6"></a-entity>
 
+      <!-- movement clamp -->
       <script>
         AFRAME.registerComponent('bounded-controls', {
           schema:{x:{default:4.8},z:{default:4.8}},
@@ -25,13 +27,16 @@
         });
       </script>
 
+      <!-- camera rig in the middle -->
       <a-entity id="rig" position="0 1.8 0" wasd-controls bounded-controls>
         <a-camera look-controls></a-camera>
       </a-entity>
 
+      <!-- floor & ceiling -->
       <a-plane rotation="-90 0 0" width="10" height="10" color="#fff" position="0 0 0"></a-plane>
       <a-plane rotation="90 0 0" width="10" height="10" color="#fff" position="0 8 0"></a-plane>
 
+      <!-- 4 walls making a closed cube -->
       <a-plane id="wall1" position="0 4 -5" rotation="0 0 0" width="10" height="8" color="#fff"></a-plane>
       <a-plane id="wall2" position="-5 4 0" rotation="0 90 0" width="10" height="8" color="#fff"></a-plane>
       <a-plane id="wall3" position="5 4 0" rotation="0 -90 0" width="10" height="8" color="#fff"></a-plane>
@@ -39,24 +44,21 @@
     </a-scene>
 
     <script>
-      const overlaySrc='mee.png';
-      const wallIds=['wall1','wall2','wall3','wall4'];
+      const overlaySrc = 'mee.png';
+      const wallIds = ['wall1','wall2','wall3','wall4'];
       const W=1000,H=800;
-      const rand=n=>Math.random()*n;
-      const rRot=()=> (Math.random()*30-15)*Math.PI/180;
+      const rand = n => Math.random()*n;
+      const rRot = () => (Math.random()*30-15)*Math.PI/180;
 
       wallIds.forEach(id=>{
         const canvas=document.createElement('canvas');
-        canvas.width=W;canvas.height=H;
+        canvas.width=W; canvas.height=H;
         canvas.className='wall-canvas';
         document.body.appendChild(canvas);
         const ctx=canvas.getContext('2d');
-        ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+        ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
         const wall=document.getElementById(id);
-        const mat={src:canvas,side:'double'};
-        wall.setAttribute('material',mat);
-
-        draw();
+        wall.addEventListener('loaded',()=>{wall.setAttribute('material','src',canvas); draw();});
         function draw(){
           const bg=new Image();
           bg.crossOrigin='Anonymous';
@@ -65,36 +67,16 @@
             const s=0.9+rand(0.2);
             const w=bg.naturalWidth*s, h=bg.naturalHeight*s;
             const x=W/2+rand(400)-200-w/2, y=H/2+rand(300)-150-h/2;
-
-            ctx.save();
-            ctx.translate(x+w/2,y+h/2);
-            ctx.rotate(rRot());
-            ctx.drawImage(bg,-w/2,-h/2,w,h);
-            ctx.restore();
-
-            // delay overlay by 0.25 s
-            setTimeout(()=>{
-              const ov=new Image();
-              ov.src=overlaySrc;
-              ov.onload=()=>{
-                const ow=120, oh=ov.naturalHeight*(ow/ov.naturalWidth);
-                const mx=w*0.2,my=h*0.2;
-                const ox=x+mx+rand(w-ow-2*mx), oy=y+my+rand(h-oh-2*my);
-                ctx.save();
-                ctx.translate(ox+ow/2,oy+oh/2);
-                ctx.rotate(rRot());
-                ctx.drawImage(ov,-ow/2,-oh/2,ow,oh);
-                ctx.restore();
-
-                const m=wall.getObject3D('mesh');
-                if(m&&m.material.map){
-                  m.material.map.needsUpdate=true;
-                }else{
-                  wall.setAttribute('material','src',canvas);
-                }
-              };
-            },250);
-
+            ctx.save(); ctx.translate(x+w/2,y+h/2); ctx.rotate(rRot()); ctx.drawImage(bg,-w/2,-h/2,w,h); ctx.restore();
+            const ov=new Image(); ov.src=overlaySrc;
+            ov.onload=()=>{
+              const ow=120, oh=ov.naturalHeight*(ow/ov.naturalWidth);
+              const mx=w*0.2,my=h*0.2;
+              const ox=x+mx+rand(w-ow-2*mx), oy=y+my+rand(h-oh-2*my);
+              ctx.save(); ctx.translate(ox+ow/2,oy+oh/2); ctx.rotate(rRot());
+              ctx.drawImage(ov,-ow/2,-oh/2,ow,oh); ctx.restore();
+              const m=wall.getObject3D('mesh'); if(m&&m.material.map) m.material.map.needsUpdate=true;
+            };
             setTimeout(draw,1200);
           };
         }
@@ -102,3 +84,4 @@
     </script>
   </body>
 </html>
+
