@@ -13,8 +13,14 @@
 
 <a-scene background="color: #fff">
   <!-- Lighting -->
-  <a-entity light="type: ambient; color: #888"></a-entity>
-  <a-entity light="type: directional; color: #fff; intensity: 0.8" position="0 8 6"></a-entity>
+  <!-- Ambient light for base brightness -->
+  <a-entity light="type: ambient; color: #aaa"></a-entity>
+
+  <!-- Directional lights from multiple sides to even illumination -->
+  <a-entity light="type: directional; color: #fff; intensity: 0.8" position="0 8 6"></a-entity>   <!-- front-top -->
+  <a-entity light="type: directional; color: #fff; intensity: 0.8" position="0 8 -6"></a-entity>  <!-- back-top -->
+  <a-entity light="type: directional; color: #fff; intensity: 0.6" position="6 6 0"></a-entity>   <!-- right-top -->
+  <a-entity light="type: directional; color: #fff; intensity: 0.6" position="-6 6 0"></a-entity>  <!-- left-top -->
 
   <!-- Bounded movement -->
   <script>
@@ -94,3 +100,4 @@ wallIds.forEach(createWallCollage);
 
 </body>
 </html>
+
