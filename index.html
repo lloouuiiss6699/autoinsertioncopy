@@ -1,16 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>autoinsertion</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
-    canvas.wall-canvas {
-      position: absolute;
-      left: -9999px;
-      top: -9999px;
-    }
+    canvas.wall-canvas { position: absolute; left: -9999px; top: -9999px; }
   </style>
 </head>
 <body>
@@ -19,32 +15,29 @@
   <!-- Lighting -->
   <a-entity light="type: ambient; color: #888"></a-entity>
   <a-entity light="type: directional; color: #fff; intensity: 0.8" position="0 8 6"></a-entity>
-  <a-entity light="type: directional; color: #fff; intensity: 0.6" position="6 8 0"></a-entity>
-  <a-entity light="type: directional; color: #fff; intensity: 0.6" position="-6 8 0"></a-entity>
 
   <!-- Bounded movement -->
   <script>
     AFRAME.registerComponent('bounded-controls', {
       schema: {limit: {type: 'vec3', default: {x: 4.8, z: 4.8}}},
-      tick: function () {
-        const pos = this.el.object3D.position;
-        const lim = this.data.limit;
-        pos.x = Math.max(-lim.x, Math.min(lim.x, pos.x));
-        pos.z = Math.max(-lim.z, Math.min(lim.z, pos.z));
+      tick: function(){
+        const p = this.el.object3D.position, l = this.data.limit;
+        p.x = Math.max(-l.x, Math.min(l.x, p.x));
+        p.z = Math.max(-l.z, Math.min(l.z, p.z));
       }
     });
   </script>
 
   <!-- Camera -->
-  <a-entity position="0 1.8 0" wasd-controls bounded-controls>
+  <a-entity id="rig" position="0 1.8 0" wasd-controls bounded-controls>
     <a-camera look-controls></a-camera>
   </a-entity>
 
-  <!-- Floor and ceiling -->
+  <!-- Floor & ceiling -->
   <a-plane rotation="-90 0 0" width="10" height="10" color="#fff" position="0 0 0"></a-plane>
   <a-plane rotation="90 0 0" width="10" height="10" color="#fff" position="0 8 0"></a-plane>
 
-  <!-- Four gallery walls -->
+  <!-- Four enclosing walls -->
   <a-plane id="wall1" position="0 4 -5" rotation="0 0 0" width="10" height="8" color="#fff"></a-plane>
   <a-plane id="wall2" position="-5 4 0" rotation="0 90 0" width="10" height="8" color="#fff"></a-plane>
   <a-plane id="wall3" position="5 4 0" rotation="0 -90 0" width="10" height="8" color="#fff"></a-plane>
@@ -52,77 +45,48 @@
 </a-scene>
 
 <script>
-const overlaySrc = 'mee.png'; // your face overlay
-const wallIds = ['wall1','wall2','wall3','wall4'];
-const CANVAS_WIDTH = 1000, CANVAS_HEIGHT = 800;
+const overlaySrc='mee.png';
+const wallIds=['wall1','wall2','wall3','wall4'];
+const CANVAS_WIDTH=1000, CANVAS_HEIGHT=800;
 
-function getRandomImage() {
-  const w = 500 + Math.floor(Math.random()*300);
-  const h = 400 + Math.floor(Math.random()*200);
-  return { src:`https://picsum.photos/${w}/${h}?random=${Math.random()}`, w, h };
+function getRandomImage(){
+  const w=500+Math.floor(Math.random()*300);
+  const h=400+Math.floor(Math.random()*200);
+  return {src:`https://picsum.photos/${w}/${h}?random=${Math.random()}`,w,h};
 }
-const randRot = () => Math.random()*30 - 15;
-const randScale = () => 0.9 + Math.random()*0.2;
+const randRot=()=>Math.random()*30-15;
+const randScale=()=>0.9+Math.random()*0.2;
 
-function createWallCollage(wallId) {
-  const canvas = document.createElement('canvas');
-  canvas.width = CANVAS_WIDTH;
-  canvas.height = CANVAS_HEIGHT;
-  canvas.className = 'wall-canvas';
-  document.body.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  const wallEl = document.getElementById(wallId);
-  wallEl.addEventListener('loaded', () => {
-    wallEl.setAttribute('material','src',canvas);
-    drawNext();
-  });
-
-  function drawNext() {
-    const imgData = getRandomImage();
-    const bg = new Image();
-    bg.crossOrigin = "Anonymous";
-    bg.src = imgData.src;
-    bg.onload = () => {
-      const scale = randScale();
-      const w = bg.naturalWidth * scale;
-      const h = bg.naturalHeight * scale;
-      const cx = canvas.width/2, cy = canvas.height/2;
-      const ox = Math.floor(Math.random()*400 - 200);
-      const oy = Math.floor(Math.random()*300 - 150);
-      const x = cx + ox - w/2, y = cy + oy - h/2;
-
-      ctx.save();
-      ctx.translate(x + w/2, y + h/2);
-      ctx.rotate(randRot()*Math.PI/180);
-      ctx.drawImage(bg, -w/2, -h/2, w, h);
-      ctx.restore();
-
-      const overlay = new Image();
-      overlay.src = overlaySrc;
-      overlay.onload = () => {
-        const oW = 120;
-        const oH = overlay.naturalHeight * (oW / overlay.naturalWidth);
-        const mX = w*0.2, mY = h*0.2;
-        const oMaxX = w - oW - 2*mX;
-        const oMaxY = h - oH - 2*mY;
-        const ox2 = x + mX + Math.random()*oMaxX;
-        const oy2 = y + mY + Math.random()*oMaxY;
-
-        ctx.save();
-        ctx.translate(ox2 + oW/2, oy2 + oH/2);
-        ctx.rotate(randRot()*Math.PI/180);
-        ctx.drawImage(overlay, -oW/2, -oH/2, oW, oH);
-        ctx.restore();
-
-        const mesh = wallEl.getObject3D('mesh');
-        if (mesh && mesh.material.map) mesh.material.map.needsUpdate = true;
+function createWallCollage(id){
+  const canvas=document.createElement('canvas');
+  canvas.width=CANVAS_WIDTH; canvas.height=CANVAS_HEIGHT;
+  canvas.className='wall-canvas'; document.body.appendChild(canvas);
+  const ctx=canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  const wall=document.getElementById(id);
+  wall.addEventListener('loaded',()=>{wall.setAttribute('material','src',canvas); draw();});
+  function draw(){
+    const imgData=getRandomImage(), bg=new Image();
+    bg.crossOrigin='Anonymous'; bg.src=imgData.src;
+    bg.onload=()=>{
+      const s=randScale(), w=bg.naturalWidth*s, h=bg.naturalHeight*s;
+      const cx=canvas.width/2, cy=canvas.height/2;
+      const ox=Math.random()*400-200, oy=Math.random()*300-150;
+      const x=cx+ox-w/2, y=cy+oy-h/2;
+      ctx.save(); ctx.translate(x+w/2,y+h/2); ctx.rotate(randRot()*Math.PI/180);
+      ctx.drawImage(bg,-w/2,-h/2,w,h); ctx.restore();
+      const overlay=new Image(); overlay.src=overlaySrc;
+      overlay.onload=()=>{
+        const ow=120, oh=overlay.naturalHeight*(ow/overlay.naturalWidth);
+        const mx=w*0.2,my=h*0.2,omx=w-ow-2*mx,omy=h-oh-2*my;
+        const ox2=x+mx+Math.random()*omx, oy2=y+my+Math.random()*omy;
+        ctx.save(); ctx.translate(ox2+ow/2,oy2+oh/2); ctx.rotate(randRot()*Math.PI/180);
+        ctx.drawImage(overlay,-ow/2,-oh/2,ow,oh); ctx.restore();
+        const mesh=wall.getObject3D('mesh');
+        if(mesh&&mesh.material.map) mesh.material.map.needsUpdate=true;
       };
-      setTimeout(drawNext, 1000 + Math.random()*300);
+      setTimeout(draw,1000+Math.random()*300);
     };
-    bg.onerror = () => setTimeout(drawNext, 500);
+    bg.onerror=()=>setTimeout(draw,500);
   }
 }
 wallIds.forEach(createWallCollage);
